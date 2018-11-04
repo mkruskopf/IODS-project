@@ -1,0 +1,5 @@
+---
+output: github_document
+---
+
+Here you can find my course diary: https://mkruskopf.github.io/IODS-project/
