@@ -1,65 +1,72 @@
-# Exam Success on an Introductory Social Science Statistics Course of 2014
-
-*Describe the work you have done this week and summarize your learning.*
-
-Write a continuous report with a clear structure. There is no need to repeat the assignments in your course diary. The focus of your work should be on the clarity of your report. For full points you should be able to show an understanding of the methods and results used in your analysis. Feel free to also use material outside this course as learning sources. Clear, understandable and comprehensive explanations are worth the full points.
-
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
-
-```{r}
-setwd("C:/Users/mkruskop/Documents/IODS/IODS-project/data")
-learning2014 <- read.table("learning2014")
-```
+# Exercise 2: Regression and model validation
 
 
-##Data
-Our wrangled dataset of 166 observations is based on an international survey of Approaches to Learning concerning teaching and learning during an introductory course to social statistics conducted in the fall of 2014. The seven variables here observed are gender, age, global attitude towards statistics, points acquired in exam, and altogether three varying approaches to learning: the deep, surface and strategic approach, measured on a Likert-scale of 1-5.  
+## Exam Success on an Introductory Social Statistics Course of 2014
 
-```{r}
+The current research explores the exam success on an introductory social statistics course in 2014. The research question is: Which factors contributed to exam success on the course "Introduction to Social Statistics" in the fall of 2014?
+
+
+###Data
+Our wrangled dataset of 166 observations is based on an international survey of Approaches to Learning concerning teaching and learning during an introductory course to social statistics conducted in the fall of 2014. The survey data were collected between 3.12.2014 - 10.1.2015 by Kimmo Vehkalahti. The seven variables here observed are gender, age, global attitude towards statistics, points acquired in exam, and altogether three varying approaches to learning: the deep, surface and strategic approach, measured on a Likert-scale of 1-5. An overview of the data is shown below in Figure 1.
+
+```{r learning2014}
+# loading libraries
+library(ggplot2)
+library(GGally)
+
+# importing learning2014 data
+learning2014 <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/learning2014.txt", sep=",", header=TRUE)
+
+# summary of the data
 summary(learning2014)
 ```
 
 
-```{r data}
-
-
+```{r data visualization}
 p <- ggpairs(learning2014, mapping = aes(col=gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
 p
 ```
+
 **Figure 1.** Summary and scatter matrix of the study dataset. It seems our gender distribution is quite uneven with significantly more female participants in the dataset (indicated here by the colour red). Most of our variables are quite normally distributed. The age distribution is a little downwardly skew with a couple of elderly outliers. The points distribution seems to have a small bump in the lower quartile, otherwise characterized by seemingly normal distribution. Correlations seem to be significantly positive between variables attitude and points and negative, expectedly, between variables related to surface and deep learning approaches.
 
-##Analysis
+
+###Analysis
 First, I will test the hypothesis, that the variable "points", indicating the exam points of the participants, is best explained by the variables attitude, deep learning approach and strategic learning approach. I will fit a regression model to the data with these three explanatory variables.
 
-```{r analysis}
+```{r analysis1}
 pointsmodel <- lm(points ~ attitude + deep + stra, data = learning2014)
 summary(pointsmodel)
 
 ```
 
-It would here seem that the variable attitude clearly has a statistically significant, positive explanatory relation with the exam points variable (p < .05). The strategic learning orientation seems to exhibit a relatively significant positive relation to the exam points variable (p = .075). I will, thus remove the deep approach variable and attempt to fit a regression model with only two variables, attitude and strategic approach.
 
-```{r}
+It would here seem that the variable attitude a clear, statistically significant, positive explanatory relation with the exam points variable (p < .05). The strategic learning orientation seems to exhibit a relatively significant positive relation to the exam points variable (p = .075). I will, thus remove the deep approach variable and attempt to fit a regression model with only two variables, attitude and strategic approach.
+
+
+```{r analysis2}
 pointsmodel <- lm(points ~ attitude + stra, data = learning2014)
 summary(pointsmodel)
 ```
 After this second iteration, it would seem the strategic approach variable no longer exhibits a statistically significant relation to the exam points variable. I will, thus remove it, and fit a final regression model with attitude as explanatory variable.
 
-##Results
-```{r}
+
+###Results
+```{r analysis FINAL}
 pointsmodel <- lm(points ~ attitude, data = learning2014)
 summary(pointsmodel)
 ```
-As the regression model above shows, the *exam points* -variable is best explained by the variable *attitude* with a positive correlation (p < .05). The effect of the attitude variable on exam points is approximately 0.35. As the Figure 2. below illustrates, the errors of the model are normally distributed and not correlated, the size of the errors is not dependent on the explanatory variables and there is no leverage effect of a single observation on the model.
+As the regression model above shows, the *exam points* -variable is best explained by the variable *attitude* with a positive correlation (p < .05). The effect of the attitude variable on exam points is approximately 0.35, and the multiple R-squared shows, that less than 5 percent of the variation in exam points is explained by the global attitude towards statistics, which is a typical value for behavioural sciences. As the Figure 2. below illustrates, the errors of the model are normally distributed and not correlated, the size of the errors is not dependent on the explanatory variables and there is no leverage effect of a single observation on the model.
 
-**INSERT MULTIPLE R SQUARED DESCRIPTION**
 
 ```{r}
 par(mfrow = c(2,2))
 plot(pointsmodel, which = c(1,2,5))
 ```
+
 **Figure 2.** The residuals vs. fitted values figure implies no problem with the assumption, that the size of the errors would depend on the explanatory variables. The QQ-plot depicts the errors as quite normally distributed. The residuals-leverate -figure implies no leverage effect of a single observation on the target variable.
 
+
+### Conclusion
 Thus it can be concluded, that the global attitude of a participant towards statistics best predicts their success in the course exam of the course "Introduction to Statistics in Social Sciences", based on this 2014 data. Further data collected on future implementations of the same course can hopefully furhter support this conclusion.
+
+

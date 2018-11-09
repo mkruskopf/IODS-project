@@ -1,8 +1,11 @@
 
 # About the project
 
-This is my repository for the course *"Introduction to Open Data Science"* in the fall of 2018.
+This is my course diary of *"Introduction to Open Data Science"* in the fall of 2018.
 
-This is the direct link to my repository: https://github.com/mkruskopf/IODS-project
+This is the direct link to my GitHub repository: https://github.com/mkruskopf/IODS-project
 
 I am excited to start working!
+
+### Sources
+Vehkalahti, Kimmo & Everitt, Brian S. (2019). Multivariate Analysis for the Behavioral Sciences, 2nd Edition. Chapman and Hall/CRC, Boca Raton, Florida.
