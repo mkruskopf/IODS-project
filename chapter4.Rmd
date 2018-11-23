@@ -1,0 +1,164 @@
+# Exercise 4: Clustering and classification
+
+This exercise focuses on clustering and classification methods, such as linear discriminant analysis and k-means clustering. Our research focuses on the crime rate in Boston suburbs.  
+
+##Data
+Our dataset "Boston" is a data frame containing 14 variables and 506 observations on the housing values in the suburbs of Boston. The variables contain factors such as per capita crime rate by town, nitrogen oxides concentration and pupil-teacher ratio by town.
+
+```{r include=FALSE}
+# 1. installing the necessary packages and data
+
+library(ggplot2)
+library(dplyr)
+library(MASS)
+data("Boston")
+
+```
+```{r echo=FALSE}
+# exploring the dataset
+str(Boston)
+```
+
+
+```{r include=FALSE}
+library(dplyr)
+install.packages("corrplot", repos = "http://cran.us.r-project.org")
+
+```
+
+```{r echo=TRUE}
+# 3. 
+# visualizing the data
+cor_matrix <- cor(Boston) 
+
+# library(corrplot) or
+corrplot::corrplot(cor_matrix, method="circle", type="upper", cl.pos="b", tl.pos="d", tl.cex=0.6)
+
+# summary of variables
+summary(Boston)
+```
+
+**Figure 1.** Correlation matrix of the entire Boston data frame.
+
+The variables seem normally distributed. Based on the above correlation matrix, there seem to be high negative correlations between proportion of non-retail business acres per town and weighted mean of distances to five Boston employment centres, as well as mean of distances to the employment centers and proportion of owner-occupied units built prior to 1940 as well as nitrogen oxides concentration. Also lower status of the population (percent) and median value of owner-occupied homes in \$1000s correlate notably negatively. 
+
+Notably positive correlations can be observed between index of accessibility to radial highways and full-value property-tax rate per \$10,000. Also proportion of non-retail business acres per town and nitrogen oxides concentration (parts per 10 million) correlate positively as well as index of accessibility to radial highways and per capita crime rate by town.
+
+##Analysis
+
+###Standardizing the data
+
+To ease the future interpretation of covariances we will first scale the dataset. After that we will categorize the crime rate variable per quantiles to get "high", "low" and "middle" rate categories.
+
+
+```{r echo=TRUE}
+# 4.
+# standardizing the dataset
+boston_scaled <- scale(Boston)
+boston_scaled <- as.data.frame(boston_scaled)
+
+# categorizing the crime rate
+bins <- quantile(boston_scaled$crim)
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, labels=c("low", "med_low", "med_high", "high"))
+
+#replacing the old crime rate with the categorized variable
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+boston_scaled <- data.frame(boston_scaled, crime)
+summary(boston_scaled)
+```
+
+Above you can find a summary of the scaled dataset and categorized crime rate. After the scaling of the dataset and categorization of the crime rate variable, we will divide the data set into train (80 %) and test (20 %) sets.
+
+```{r echo=TRUE}
+# dividing the train and test sets
+n <- nrow(boston_scaled)
+ind <- sample(n,  size = n * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+```
+
+###Classification
+
+Next, we will create a classification model based on the training data by fitting a linear discriminant analysis. The target variable here is the categorical crime rate with three classes, created above. Hence, we will, among the rest of the variables, try to find variables that best discriminate the three classes of crime rate ("high", "low" and "medium").
+
+```{r}
+# 5. fitting an LDA on the train set
+lda.fit <- lda(train$crime ~ ., data = train)
+lda.fit
+
+# defining the arrow function
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric (for plotting purposes)
+classes <- as.numeric(train$crime)
+
+# plotting the results (paint both lines to execute)
+plot(lda.fit, dimen = 2, col=classes, pch=classes)
+lda.arrows(lda.fit, myscale = 1)
+
+```
+
+**Figure 2.** The scatter plot of the linear discriminant analysis on crime rate.
+
+Based on our linear discriminant analysis it would seem our crime rate variable is indeed best predicted by index of accessibility to radial highways, a connection we already saw in the correlations.   
+
+###Prediction 
+
+Next we will attempt to predict the classes of the test data based on our model created above.
+
+```{r}
+# 6. 
+# saving the crime categories from the test set and then removing the categorical crime variable from the test dataset
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+
+# predicting the classes with the LDA model on the test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# cross tabulating the results
+table(correct = correct_classes, predicted = lda.pred$class)
+```
+
+It would seem most of our actual test observations match the model predictions, which validates the model. 
+
+###K-means clustering
+Next we will reload and scale the Boston data set and use an unsupervised clustering method to assign observations to clusters based on similarity.
+
+```{r include=FALSE}
+# 7.
+# reloading the Boston-dataset 
+library(MASS)
+data("Boston")
+
+# standardizing, yet again...
+boston_scaled <- scale(Boston)
+summary(boston_scaled)
+class(boston_scaled)
+
+Boston <- as.data.frame(boston_scaled)
+```
+
+
+```{r}
+# Euclidean distances
+dist_eu <- dist(Boston)
+summary(dist_eu)
+
+# k-means clustering and plotting
+km <-kmeans(Boston, centers = 4)
+pairs(Boston[6:10], col = km$cluster)
+
+km <-kmeans(Boston, centers = 2)
+pairs(Boston[6:10], col = km$cluster)
+
+km <-kmeans(Boston, centers = 3)
+pairs(Boston[6:10], col = km$cluster)
+```
+
