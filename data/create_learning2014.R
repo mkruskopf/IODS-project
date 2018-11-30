@@ -52,7 +52,7 @@ str(learning2014analysis)
 dim(learning2014analysis)
 
 # 4) Tallennetaan tulos data-kansioon ja testataan tiedoston rakenne.
-setwd("C:/Users/mkruskop/Documents/IODS/IODS-project/data")
+setwd("insert directory")
 write.csv(learning2014analysis, file = "learning2014", row.names = FALSE)
 test <- read.csv("learning2014")
 str(test)

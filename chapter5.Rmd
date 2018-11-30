@@ -1,0 +1,122 @@
+# Exercise 5: Dimensionality reduction techniques
+
+```{r include=FALSE}
+library(GGally)
+library(dplyr)
+library(corrplot)
+```
+
+## Principal Component Analysis
+### Data
+Our dataset "human" contains 155 observations of 8 variables. The dataset combines elements from the measures "Human Development Index" and "Gender Inequality Index" from the Human Development Report 2015. A summary of the data can be seen below.
+```{r}
+# Step 1. graphical overview of the data
+human <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/human2.txt", sep=",", header=TRUE)
+
+str(human)
+
+ggpairs(human, title = "Figure 1. Correlations of our dataset 'human'")
+
+summary(human)
+```
+
+As the Figure 1 above displays, the variables portraying female-male -ratio of labour participation and expected years of education are quite normally distributed. The other variables are skew towards the right, apart from the female-male -ratio of secondary education acquisition, which contains two peaks. The correlations seem to be significantly positive between life expectancy and expected years of education, GNI per capita and life expectancy, as well as maternal mortality at birth and adolescent birth rate. Significantly negative correlations can be observed between maternal mortality at birth and female-male ratio in secondary education acquisition, maternal mortality at birth and expected years of education, expected years of education and adolescent birth rate, maternal mortality at birth and life expectancy, as well as adolescent birth rate and life expectancy.  
+
+
+### Analysis
+
+```{r}
+# Step 2. perform principal component analysis on the original data
+
+pca_human <- prcomp(human)
+
+# create a summary of pca_human
+s <- summary(pca_human)
+
+# rounded percetanges of variance captured by each PC
+pca_pr <- round(100*s$importance[2, ], digits = 1)
+
+# print out the percentages of variance
+pca_pr
+
+# create object pc_lab to be used as axis labels
+pc_lab <- paste0(names(pca_pr), " (", pca_pr, "%)")
+
+# draw a biplot
+biplot(pca_human, cex = c(0.5, 0.8), col = c("grey90", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+
+**Figure 2.** The plot on the non-standardized dataset portrays no difference between principal components, and loads all of the variables on the first component. This is due to the arbitrary units of measurement between the different variables, and displays the importance of data standardization prior to conducting principal component analysis.
+
+
+```{r}
+# Step 2. perform principal component analysis on the standardized data
+
+# standardizing the variable
+human_std <- scale(human)
+
+# perform principal component analysis (with the SVD method)
+pca_human <- prcomp(human_std)
+
+# create a summary of pca_human
+s <- summary(pca_human)
+
+# rounded percetanges of variance captured by each PC
+pca_pr <- round(100*s$importance[2, ], digits = 1)
+
+# print out the percentages of variance
+pca_pr
+
+# create object pc_lab to be used as axis labels
+pc_lab <- paste0(names(pca_pr), " (", pca_pr, "%)")
+
+# draw a biplot
+biplot(pca_human, cex = c(0.5, 0.8), col = c("grey90", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+```
+
+**Figure 3.** PCA on the standardized data.
+
+The above firgure 3. displays the following loading of variables on the first principal component: maternal mortality ratio, adolescent birth ratio and the reversed versions of expected years of education, secondary education ratio (of female-male), GNI per capita and life expectancy. The second principal component would then consist of labour participation rate and percentage of female representation in parliament. Thus, the first principal component contains variables especially related to the "life in years", so-called, of a country's population, with factors such as education and birth control having positive correlations with life expectancy and maternal conditions. The second principal component portrays factors related to societal and working life development. 
+
+## Multiple Correspondence Analysis
+
+Next we will conduct a multiple correspondence analysis on a a subset of categories from the dataset "tea" called "tea-time".
+
+```{r}
+# Step 5. MCA on tea_time
+# For some reason I am unable to knit this with the index file, so I will display as comment here what I have done, and attatch the MCA plot along with the interpretation.
+# install.packages("FactoMineR", repos = "http://cran.us.r-project.org")
+# library(FactoMineR)
+# library(ggplot2)
+# library(tidyr)
+
+# data(tea)
+# str(tea)
+
+# column names to keep in the dataset
+# keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+
+# select the 'keep_columns' to create a new dataset
+# tea_time <- select(tea, one_of(keep_columns))
+
+# look at the summaries and structure of the data
+# summary(tea_time)
+# str(tea_time)
+```
+
+
+
+```{r}
+# multiple correspondence analysis
+# mca <- MCA(tea_time, graph = FALSE)
+
+# summary of the model
+# summary(mca)
+
+# visualize MCA
+# plot(mca, invisible=c("ind"), habillage = "quali")
+```
+
+**Figure 1.** The multiple correspondence analysis on categories from "tea-time".
+
+The MCA output in Figure 1 shows us that unpackaged tea bags occur often together with chain stores and tea shops. Lunch and lemon are moderately co-occuring with these, as well as with milk, Earl Grey and black tea without sugar. Chain stores and tea bags often occur together with alone time which is not lunch, and with sugar. Unpackaged tea often co-occurs with tea shops and green tea. This is a fairly confusing explanation, and could have been explained more explicitly, but by writing this I see where this is going and it seems really handy and interesting way of analyzing qualitative data! 
