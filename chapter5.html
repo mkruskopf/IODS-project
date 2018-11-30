@@ -232,7 +232,7 @@ biplot(pca_human, cex = c(0.5, 0.8), col = c(&quot;grey90&quot;, &quot;deeppink2
 <h2>Multiple Correspondence Analysis</h2>
 <p>Next we will conduct a multiple correspondence analysis on a a subset of categories from the dataset “tea” called “tea-time”.</p>
 <pre class="r"><code># Step 5. MCA on tea_time
-# For some reason I am unable to knit this with the index file, so I will display as comment here what I have done, and attatch the MCA plot along with the interpretation.
+# For some currentlty unexplicable reason I am unable to knit this with the index file, so I will display as comment here what I have done, and attatch the MCA plot png along with the interpretation.
 # install.packages(&quot;FactoMineR&quot;, repos = &quot;http://cran.us.r-project.org&quot;)
 # library(FactoMineR)
 # library(ggplot2)
@@ -257,8 +257,8 @@ biplot(pca_human, cex = c(0.5, 0.8), col = c(&quot;grey90&quot;, &quot;deeppink2
 # summary(mca)
 
 # visualize MCA
-# plot(mca, invisible=c(&quot;ind&quot;), habillage = &quot;quali&quot;)</code></pre>
-<img src="https://github.com/mkruskopf/IODS-project/tea-timeMCA">
+# plot(mca, invisible=c(&quot;ind&quot;), habillage = &quot;quali&quot;)
+# Plot: see https://github.com/mkruskopf/IODS-project/blob/master/tea-timeMCA.PNG</code></pre>
 <p><strong>Figure 1.</strong> The multiple correspondence analysis on categories from “tea-time”.</p>
 <p>The MCA output in Figure 1 shows us that unpackaged tea bags occur often together with chain stores and tea shops. Lunch and lemon are moderately co-occuring with these, as well as with milk, Earl Grey and black tea without sugar. Chain stores and tea bags often occur together with alone time which is not lunch, and with sugar. Unpackaged tea often co-occurs with tea shops and green tea. This is a fairly confusing explanation, and could have been explained more explicitly, but by writing this I see where this is going and it seems really handy and interesting way of analyzing qualitative data!</p>
 </div>

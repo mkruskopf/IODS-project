@@ -82,9 +82,9 @@ The above firgure 3. displays the following loading of variables on the first pr
 
 Next we will conduct a multiple correspondence analysis on a a subset of categories from the dataset "tea" called "tea-time".
 
-```{r}
+```{r echo=TRUE}
 # Step 5. MCA on tea_time
-# For some reason I am unable to knit this with the index file, so I will display as comment here what I have done, and attatch the MCA plot along with the interpretation.
+# For some currentlty unexplicable reason I am unable to knit this with the index file, so I will display as comment here what I have done, and attatch the MCA plot png along with the interpretation.
 # install.packages("FactoMineR", repos = "http://cran.us.r-project.org")
 # library(FactoMineR)
 # library(ggplot2)
@@ -106,7 +106,7 @@ Next we will conduct a multiple correspondence analysis on a a subset of categor
 
 
 
-```{r}
+```{r echo=TRUE}
 # multiple correspondence analysis
 # mca <- MCA(tea_time, graph = FALSE)
 
@@ -115,6 +115,7 @@ Next we will conduct a multiple correspondence analysis on a a subset of categor
 
 # visualize MCA
 # plot(mca, invisible=c("ind"), habillage = "quali")
+# Plot: see https://github.com/mkruskopf/IODS-project/blob/master/tea-timeMCA.PNG
 ```
 
 **Figure 1.** The multiple correspondence analysis on categories from "tea-time".
