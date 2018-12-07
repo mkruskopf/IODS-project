@@ -85,39 +85,57 @@ Next we will conduct a multiple correspondence analysis on a a subset of categor
 ```{r echo=TRUE}
 # Step 5. MCA on tea_time
 # For some currentlty unexplicable reason I am unable to knit this with the index file, so I will display as comment here what I have done, and attatch the MCA plot png along with the interpretation.
-# install.packages("FactoMineR", repos = "http://cran.us.r-project.org")
-# library(FactoMineR)
-# library(ggplot2)
-# library(tidyr)
+library(FactoMineR);library(ggplot2);library(dplyr);library(tidyr)
 
-# data(tea)
-# str(tea)
+data(tea)
+str(tea)
 
 # column names to keep in the dataset
-# keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- subset(tea, select=c("Tea", "How", "how", "sugar", "where", "lunch"))
 
-# select the 'keep_columns' to create a new dataset
-# tea_time <- select(tea, one_of(keep_columns))
+summary(tea_time)
 
-# look at the summaries and structure of the data
-# summary(tea_time)
-# str(tea_time)
+gather(tea_time) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
 ```
 
 
 
 ```{r echo=TRUE}
 # multiple correspondence analysis
-# mca <- MCA(tea_time, graph = FALSE)
+mca <- MCA(tea_time, graph = FALSE)
 
-# summary of the model
-# summary(mca)
+# summary of the mode
+summary(mca)
 
 # visualize MCA
-# plot(mca, invisible=c("ind"), habillage = "quali")
-# Plot: see https://github.com/mkruskopf/IODS-project/blob/master/tea-timeMCA.PNG
+plot(mca, invisible=c("ind"), habillage = "quali")
 ```
 
 **Figure 1.** The multiple correspondence analysis on categories from "tea-time".
 
 The MCA output in Figure 1 shows us that unpackaged tea bags occur often together with chain stores and tea shops. Lunch and lemon are moderately co-occuring with these, as well as with milk, Earl Grey and black tea without sugar. Chain stores and tea bags often occur together with alone time which is not lunch, and with sugar. Unpackaged tea often co-occurs with tea shops and green tea. This is a fairly confusing explanation, and could have been explained more explicitly, but by writing this I see where this is going and it seems really handy and interesting way of analyzing qualitative data! 
+
+```{r}
+cats <- apply(tea_time, 2, function(x) nlevels(as.factor(x)))
+
+# data frame with variable coordinates
+mca1_vars_df = data.frame(mca$var$coord, Variable = rep(names(cats), cats))
+
+# data frame with observation coordinates
+mca1_obs_df = data.frame(mca$ind$coord)
+
+# plot of variable categories
+ggplot(data = mca1_obs_df, aes(x = Dim.1, y = Dim.2)) +
+  geom_hline(yintercept = 0, colour = "gray70") +
+  geom_vline(xintercept = 0, colour = "gray70") +
+  geom_point(colour = "gray50", alpha = 0.7) +
+  geom_density2d(colour = "gray80") +
+  geom_text(data = mca1_vars_df, 
+            aes(x = Dim.1, y = Dim.2, 
+                label = rownames(mca1_vars_df), colour = Variable)) +
+  ggtitle("MCA plot of variables using R package FactoMineR") +
+  scale_colour_discrete(name = "Variable")
+```
+

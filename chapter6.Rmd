@@ -1,0 +1,196 @@
+# Exercise 6: Analysis of lognitudinal data
+
+```{r include=FALSE}
+library(tidyr); library(dplyr); library(ggplot2)
+
+BPRS <- read.csv("C:/Users/mkruskop/Documents/IODS/IODS-project/data/BPRS")
+
+BPRS$treatment <- factor(BPRS$treatment)
+BPRS$subject <- factor(BPRS$subject)
+BPRSL <-  BPRS %>% gather(key = weeks, value = bprs, -treatment, -subject)
+BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks, 5,5)))
+BPRSL <- BPRSL %>%
+  group_by(week) %>%
+  mutate(stdbprs = (bprs - mean(bprs))/sd(bprs)) %>%
+  ungroup()
+n <- BPRSL$week %>% unique() %>% length()
+BPRSS <- BPRSL %>%
+  group_by(treatment, week) %>%
+  summarise( mean = mean(bprs), se = sd(bprs)/sqrt(n) ) %>%
+  ungroup()
+BPRSL8S <- BPRSL %>%
+  filter(week > 0) %>%
+  group_by(treatment, subject) %>%
+  summarise( mean=mean(bprs) ) %>%
+  ungroup()
+BPRSL8S1 <- filter(BPRSL8S, BPRSL8S$mean<=60)
+
+
+RATSL <- read.csv("C:/Users/mkruskop/Documents/IODS/IODS-project/data/RATSL")
+RATS <- read.csv("C:/Users/mkruskop/Documents/IODS/IODS-project/data/RATS")
+
+RATS$ID <- factor(RATS$ID)
+RATS$Group <- factor(RATS$Group)
+RATSL <- RATS %>%
+  gather(key = WD, value = Weight, -ID, -Group) %>%
+  mutate(Time = as.integer(substr(WD, 3,4))) 
+
+```
+
+## Schizophrenia Treatment Alternatives
+### Data
+Our data consist of a lognitudinal sample of BPRS-points (brief psychiatric rating scale) of 40 participants  suspected with a schizophrenia diagnosis over an 8 week treatment period, in addition to a pre-measurement week 0, with two alternate treatment conditions. Below the data summaries and figures show how the participants' test scores decrease over the treatment period in the two treatment conditions, and the so-called tracking phenomenon, or how the individuals' scores correlate with each other throughout the study.
+
+```{r}
+glimpse(BPRS)
+head(BPRS)
+tail(BPRS)
+
+ggplot(BPRSL, aes(x = week, y = bprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(BPRSL$bprs), max(BPRSL$bprs)))
+
+ggplot(BPRSL, aes(x = week, y = stdbprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  scale_y_continuous(name = BPRSL$stdbprs)
+```
+
+**Figure 1.** The decrease of test scores of each participant in both treatment conditions over the 8 week period. Notice how the scores systematically decrease and how the standardized scores in the second plot have high within-participant correlations. There would also seem to be one clear outlier in the second treatment condition with continuously higher scores than the other participants.
+
+### Analysis
+Next we will start formally testing the hypothesized difference between the two treatment conditions. We will start by applying a *t-test* on the long-form dataset excluding the outlier in treatment condition 2. 
+
+```{r}
+# Perform a two-sample t-test
+t.test(mean ~ treatment, data = BPRSL8S1, var.equal = TRUE)
+```
+
+The t-test summary above confirms no evidence for a between-group difference on a 95 % confidence interval. We will still apply an Analysis of Covariance (ANCOVA) on the dataset controlling the baseline measure of week 0. 
+
+```{r}
+# Add the baseline from the original data as a new variable to the summary data
+BPRSL8S2 <- BPRSL8S %>%
+  mutate(baseline = BPRS$week0)
+
+# Fit the linear model with the mean as the response 
+fit <- lm(formula = mean ~ baseline+treatment, data = BPRSL8S2)
+
+# Compute the analysis of variance table for the fitted model with anova()
+summary(fit)
+anova(fit)
+
+ggplot(BPRSL8S1, aes(x = treatment, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(bprs), weeks 1-8")
+```
+
+**Figure 2.** A boxplot of the mean BPRS-scores in the two treatment conditions.
+
+The results show a strong relation of the baseline measure to the measures taken after having begun the treatment, but still no treatment difference between the two conditions after conditioning baseline value. 
+
+###Results
+We thus conclude our analysis by stating, that no significant difference between these two treatment conditions on the BPRS-scores of suspected schizophrenia patients could be established. 
+
+## How Do Rats Grow?
+### Data
+Our second dataset consists of results from a nutrition study on three groups of rats, that were put on different diets. Each animal's body weight was recorded repeatedly over a 9-week period. There were 6 rats in the study, 8 on diet 1., 4 on diet 2. and 4 on diet 3. 
+```{r}
+glimpse(RATS)
+head(RATS)
+tail(RATS)
+
+```
+
+
+### Analysis
+Next we will fit a linear regression model on the data.
+```{r}
+# create a regression model RATS_reg
+RATS_reg <- lm(formula=Weight~Time+Group,data=RATSL)
+
+# print out a summary of the model
+summary(RATS_reg)
+
+ggplot(RATSL, aes(x = Time, y = Weight, group = ID)) +
+  geom_line(aes(linetype = Group)) + 
+  scale_x_continuous(name = "Time (days)", breaks = seq(0, 60, 10)) + 
+  scale_y_continuous(name = "Weight (grams)") + 
+  theme(legend.position = "top")
+```
+
+**Figure 1.** The increase in each rat's body weight over the 9 week period. Notice the difference between the three groups, their clear dependency of each other and the outlier in group 2. 
+
+As the results show, there seems to be clear dependency in the repeated measures of one another. Next we will try out a random intercept model with the two explanatory variables of time and group. This model allows for the linear regression of each rat to differ in intercept from all other rats. 
+
+```{r}
+
+#The Random Intercept Model
+# access library lme4
+library(lme4)
+
+# Create a random intercept model
+RATS_ref <- lmer(Weight ~ Time + Group + (1 | ID), data = RATSL, REML = FALSE)
+
+# Print the summary of the model
+summary(RATS_ref)
+```
+
+The above results indicate considerable variation in the intercepts of the regression fits of the individual rat growth profiles, since the estimated variance in the rat random effects is quite large. The estimated standard error in time, however, is much smaller with the assumed independence and ignoring the within-subject dependencies. Next we will fit a random intercept and random slope model with time x ID interaction.
+
+
+```{r}
+#Slippery slopes: Random Intercept and Random Slope Model
+# create a random intercept and random slope model
+RATS_ref1 <- lmer(Weight ~ Time + Group + (Time | ID), data = RATSL, REML = FALSE)
+
+# print a summary of the model
+summary(RATS_ref1)
+
+# perform an ANOVA test on the two models
+anova(RATS_ref1, RATS_ref)
+
+```
+
+The likelihood ratio test for the random intercept model versus the random intercept and slope model gives a chi-squared statistic of 142.94 with 2 degrees of freedom (DF) and the associated p-value is very small, which indicates better fit against the comparison model. Finally we will fit a random intercept and slope model, which allows for an additional group x time interaction.
+
+```{r}
+#Time to interact: Random Intercept and Random Slope Model with interaction
+# create a random intercept and random slope model with the interaction
+RATS_ref2 <- lmer(Weight ~ Time + Group + (Time | Group), data = RATSL, REML = FALSE)
+
+# print a summary of the model
+summary(RATS_ref2)
+
+# perform an ANOVA test on the two models
+anova(RATS_ref2, RATS_ref1)
+
+# Create a vector of the fitted values
+Fitted <- fitted(RATS_ref2)
+
+# Create a new column fitted to RATSL
+RATSL<-mutate(RATSL,fitted=Fitted)
+
+# draw the plot of RATSL with the Fitted values of weight
+ggplot(RATSL, aes(x = Time, y = Fitted, group = ID))+ 
+  geom_line(aes(linetype = Group))+ 
+  scale_x_continuous(name = "Time (days)", breaks = seq(0, 60, 20))+ 
+  scale_y_continuous(name = "Weight (grams)")+ 
+  theme_bw() + theme(legend.position = "right")+ 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())+ 
+  ggtitle("Fitted")
+```
+
+**Figure 2.** The fitted growth rate profiles from the interaction model.
+
+From these results we can conclude that the interaction model provides a better fit for the rat growth data, and that the growth rate slopes are significantly higher for rats in group 2 than group 1, but less so comparing group 1 and group 3.
+
+### Results
+We can conclude our analysis by stating, that the growth rate of rats on diet number 2. was the highest, and thus this diet is the best performing in increasing the rats' body weight.
+
+
